@@ -1,5 +1,8 @@
 <!DOCTYPE html>
-新增刪除按鍵+用戶下拉列表+僅顯示個人記錄v3新增刪除按鍵+用戶下拉列表+僅顯示個人記錄v2    <title>每日工作記錄 | Work Diary</title>
+新增匯出CSV+工作量統計+語言記憶v4 新增刪除按鍵+用戶下拉列表+僅顯示個人記錄v3 新增刪除按鍵+用戶下拉列表+僅顯示個人記錄v2
+<html>
+<head>
+    <title>每日工作記錄 | Work Diary</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -7,23 +10,105 @@
             --bg-color: #f3f4f6;
             --card-bg: #ffffff;
         }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; color: #374151; }
-        .container { max-width: 800px; margin: 0 auto; background: var(--card-bg); padding: 30px; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: 600; color: #111827; }
-        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; box-sizing: border-box; font-size: 16px; transition: border-color 0.2s; }
-        input:focus, textarea:focus, select:focus { outline: none; border-color: var(--primary-color); ring: 2px solid rgba(79, 70, 229, 0.1); }
-        button { background-color: var(--primary-color); color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 16px; transition: background-color 0.2s; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: #374151;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #111827;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 16px;
+            transition: background-color 0.2s;
+        }
         button:hover { background-color: #4338ca; }
         button:disabled { background-color: #9ca3af; cursor: not-allowed; }
         button.danger { background-color: #ef4444; padding: 6px 12px; font-size: 14px; }
         button.danger:hover { background-color: #dc2626; }
-        .log-item { background: #f9fafb; border: 1px solid #e5e7eb; padding: 20px; border-radius: 10px; margin-bottom: 15px; position: relative; }
-        .log-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; color: #6b7280; align-items: flex-start; }
+        button.secondary { background-color: #6b7280; margin-left: 10px; }
+        button.secondary:hover { background-color: #4b5563; }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        .stat-card {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+        }
+        .stat-value { font-size: 20px; font-weight: bold; margin-top: 5px; }
+        
+        .log-item {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #6b7280;
+            align-items: flex-start;
+        }
         .priority-high { color: #ef4444; background: #fee2e2; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
         .priority-medium { color: #f59e0b; background: #fef3c7; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
         .priority-low { color: #10b981; background: #dcfce7; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+        
         .controls { display: flex; gap: 12px; margin-bottom: 30px; align-items: center; }
         .lang-switch { cursor: pointer; color: var(--primary-color); font-weight: 500; font-size: 14px; }
         .username-display { font-weight: bold; color: var(--primary-color); }
@@ -33,28 +118,28 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1 id="title" style="font-size: 24px; margin: 0;">每日工作記錄</h1>
-            <span class="lang-switch" onclick="toggleLang()">English / 繁體中文</span>
+            <h1 id="title">每日工作記錄</h1>
+            <div class="lang-switch" onclick="toggleLang()">English / 繁體中文</div>
         </div>
 
-        <div class="form-group" id="userSelectionArea">
-            <label id="selectUserLabel">選擇用戶 / Select User:</label>
+        <div class="form-group">
+            <label id="selectUserLabel">切換用戶：</label>
             <div style="display: flex; gap: 10px;">
                 <select id="userListSelect" style="flex: 1;"></select>
-                <button onclick="addNewUserPrompt()" style="padding: 12px;">+ 新增 / Add</button>
+                <button onclick="addNewUserPrompt()">+ 新增 / Add</button>
             </div>
         </div>
 
-        <div id="mainApp" style="display: none;">
-            <p id="welcomeMsg" style="margin-bottom: 20px;"></p>
-            
+        <div id="welcomeMsg" style="margin-bottom: 20px; font-size: 16px;"></div>
+
+        <div id="mainApp">
             <div class="form-group">
                 <label id="contentLabel">工作內容：</label>
                 <textarea id="workContent" rows="4" placeholder="今天完成了什麼？"></textarea>
             </div>
-            
+
             <div class="form-group">
-                <label id="priorityLabel">重要度設置 / Priority:</label>
+                <label id="priorityLabel">重要度設置：</label>
                 <select id="prioritySelect">
                     <option value="auto">自動識別 / Auto Detect (AI)</option>
                     <option value="high">高 / High</option>
@@ -69,7 +154,18 @@
             </div>
 
             <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-            <h2 id="historyTitle" style="font-size: 20px; margin-bottom: 20px;">我的歷史記錄</h2>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 id="historyTitle" style="font-size: 20px; margin: 0;">我的歷史記錄</h2>
+                <button class="secondary" id="exportBtn" onclick="exportToCSV()">匯出 CSV</button>
+            </div>
+
+            <div class="stats-container" id="statsPanel">
+                <div class="stat-card"><div id="statLabelHigh">高優先級</div><div class="stat-value" id="countHigh" style="color: #ef4444;">0</div></div>
+                <div class="stat-card"><div id="statLabelMed">中優先級</div><div class="stat-value" id="countMed" style="color: #f59e0b;">0</div></div>
+                <div class="stat-card"><div id="statLabelLow">低優先級</div><div class="stat-value" id="countLow" style="color: #10b981;">0</div></div>
+            </div>
+
             <div id="logsList"></div>
         </div>
     </div>
@@ -78,18 +174,18 @@
         const SUPABASE_URL = 'https://opfuiqjlsqrxxpvvrwnp.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wZnVpcWpsc3FyeHhwdnZyd25wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNTc3NDgsImV4cCI6MjA5MTYzMzc0OH0.dYhQodqZTewt0NiMjtY-0XPGTUvxgnQDpukp9p-2ZwA';
         const DEEPSEEK_API_KEY = 'sk-aea540912179425e85dd269ca592547e';
-        
+
         const { createClient } = window.supabase;
         const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
-        
+
         let currentUsername = localStorage.getItem('work_diary_user') || '';
-        let userList = JSON.parse(localStorage.getItem('work_diary_user_list')) || [];
-        let currentLang = 'zh';
-        
+        let currentLang = localStorage.getItem('work_diary_lang') || 'zh';
+        let currentLogs = [];
+
         const i18n = {
             zh: {
                 title: '每日工作記錄',
-                selectUser: '選擇用戶：',
+                selectUser: '切換用戶：',
                 contentLabel: '工作內容：',
                 priorityLabel: '重要度設置：',
                 submitBtn: '提交記錄',
@@ -97,13 +193,16 @@
                 placeholder: '今天完成了什麼？',
                 welcome: '當前用戶：',
                 aiWorking: 'AI 正在識別重要程度...',
-                confirm: '確認',
                 delete: '刪除',
-                deleteConfirm: '確定要刪除這條記錄嗎？'
+                deleteConfirm: '確定要刪除這條記錄嗎？',
+                exportBtn: '匯出 CSV',
+                statHigh: '高優先級',
+                statMed: '中優先級',
+                statLow: '低優先級'
             },
             en: {
                 title: 'Daily Work Diary',
-                selectUser: 'Select User:',
+                selectUser: 'Switch User:',
                 contentLabel: 'Work Content:',
                 priorityLabel: 'Priority Setting:',
                 submitBtn: 'Submit Log',
@@ -111,45 +210,32 @@
                 placeholder: 'What did you achieve today?',
                 welcome: 'User:',
                 aiWorking: 'AI Identifying priority...',
-                confirm: 'Confirm',
                 delete: 'Delete',
-                deleteConfirm: 'Are you sure you want to delete this log?'
+                deleteConfirm: 'Are you sure you want to delete this log?',
+                exportBtn: 'Export CSV',
+                statHigh: 'High Priority',
+                statMed: 'Medium Priority',
+                statLow: 'Low Priority'
             }
         };
-        
-        function updateUI() {
-            const t = i18n[currentLang];
-            document.getElementById('title').innerText = t.title;
-            document.getElementById('selectUserLabel').innerText = t.selectUser;
-            document.getElementById('contentLabel').innerText = t.contentLabel;
-            document.getElementById('priorityLabel').innerText = t.priorityLabel;
-            document.getElementById('submitBtn').innerText = t.submitBtn;
-            document.getElementById('historyTitle').innerText = t.historyTitle;
-            document.getElementById('workContent').placeholder = t.placeholder;
-            document.getElementById('aiLoading').innerText = t.aiWorking;
-            
-            updateUserListUI();
-            
-            if (currentUsername) {
-                document.getElementById('mainApp').style.display = 'block';
-                document.getElementById('welcomeMsg').innerHTML = `${t.welcome} <span class="username-display">${currentUsername}</span>`;
-                fetchLogs();
-            } else {
-                document.getElementById('mainApp').style.display = 'none';
+
+        async function fetchAllUsers() {
+            const { data, error } = await supabaseClient.from('work_logs').select('username');
+            if (data) {
+                const uniqueUsers = [...new Set(data.map(item => item.username))].filter(u => u).sort();
+                updateUserListUI(uniqueUsers);
             }
         }
 
-        function updateUserListUI() {
+        function updateUserListUI(users) {
             const select = document.getElementById('userListSelect');
             select.innerHTML = '<option value="">-- 請選擇 / Select --</option>';
-            userList.forEach(user => {
+            users.forEach(user => {
                 const opt = document.createElement('option');
-                opt.value = user;
-                opt.innerText = user;
+                opt.value = user; opt.innerText = user;
                 if (user === currentUsername) opt.selected = true;
                 select.appendChild(opt);
             });
-            
             select.onchange = (e) => {
                 const val = e.target.value;
                 if (val) {
@@ -160,25 +246,46 @@
             };
         }
 
+        function updateUI() {
+            const t = i18n[currentLang];
+            document.getElementById('title').innerText = t.title;
+            document.getElementById('selectUserLabel').innerText = t.selectUser;
+            document.getElementById('contentLabel').innerText = t.contentLabel;
+            document.getElementById('priorityLabel').innerText = t.priorityLabel;
+            document.getElementById('submitBtn').innerText = t.submitBtn;
+            document.getElementById('historyTitle').innerText = t.historyTitle;
+            document.getElementById('workContent').placeholder = t.placeholder;
+            document.getElementById('aiLoading').innerText = t.aiWorking;
+            document.getElementById('exportBtn').innerText = t.exportBtn;
+            document.getElementById('statLabelHigh').innerText = t.statHigh;
+            document.getElementById('statLabelMed').innerText = t.statMed;
+            document.getElementById('statLabelLow').innerText = t.statLow;
+
+            if (currentUsername) {
+                document.getElementById('mainApp').style.display = 'block';
+                document.getElementById('welcomeMsg').innerHTML = `${t.welcome} <span class="username-display">${currentUsername}</span>`;
+                fetchLogs();
+            } else {
+                document.getElementById('mainApp').style.display = 'none';
+            }
+        }
+
         function addNewUserPrompt() {
             const name = prompt(currentLang === 'zh' ? '請輸入新用戶名：' : 'Enter new username:');
             if (name && name.trim()) {
-                const trimmed = name.trim();
-                if (!userList.includes(trimmed)) {
-                    userList.push(trimmed);
-                    localStorage.setItem('work_diary_user_list', JSON.stringify(userList));
-                }
-                currentUsername = trimmed;
-                localStorage.setItem('work_diary_user', trimmed);
+                currentUsername = name.trim();
+                localStorage.setItem('work_diary_user', currentUsername);
+                fetchAllUsers();
                 updateUI();
             }
         }
-        
+
         function toggleLang() {
             currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            localStorage.setItem('work_diary_lang', currentLang);
             updateUI();
         }
-        
+
         async function analyzePriority(content) {
             try {
                 const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
@@ -186,7 +293,10 @@
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${DEEPSEEK_API_KEY}` },
                     body: JSON.stringify({
                         model: "deepseek-chat",
-                        messages: [{ role: "system", content: "Categorize work into 'high', 'medium', or 'low'. Return one word." }, { role: "user", content: content }]
+                        messages: [
+                            { role: "system", content: "Categorize work into 'high', 'medium', or 'low'. Return one word." },
+                            { role: "user", content: content }
+                        ]
                     })
                 });
                 const data = await response.json();
@@ -196,34 +306,42 @@
                 return 'low';
             } catch (e) { return 'low'; }
         }
-        
+
         async function addLog() {
             const content = document.getElementById('workContent').value.trim();
             if (!content) return;
             const btn = document.getElementById('submitBtn');
             const loader = document.getElementById('aiLoading');
             const prioritySelect = document.getElementById('prioritySelect').value;
+            
             btn.disabled = true;
             let priority;
             if (prioritySelect === 'auto') {
                 loader.style.display = 'inline';
                 priority = await analyzePriority(content);
             } else { priority = prioritySelect; }
+
             const { error } = await supabaseClient.from('work_logs').insert([{ username: currentUsername, content: content, priority: priority }]);
-            if (!error) { document.getElementById('workContent').value = ''; fetchLogs(); }
+            if (!error) {
+                document.getElementById('workContent').value = '';
+                fetchLogs();
+                fetchAllUsers();
+            }
             btn.disabled = false;
             loader.style.display = 'none';
         }
-        
+
         async function deleteLog(id) {
             if (!confirm(i18n[currentLang].deleteConfirm)) return;
             const { error } = await supabaseClient.from('work_logs').delete().eq('id', id);
-            if (!error) fetchLogs();
+            if (!error) { fetchLogs(); fetchAllUsers(); }
         }
 
         async function fetchLogs() {
             const { data, error } = await supabaseClient.from('work_logs').select('*').eq('username', currentUsername).order('created_at', { ascending: false });
             if (data) {
+                currentLogs = data;
+                updateStats(data);
                 const list = document.getElementById('logsList');
                 list.innerHTML = data.map(log => `
                     <div class="log-item">
@@ -239,8 +357,37 @@
                 `).join('');
             }
         }
-        
-        // Initial setup
+
+        function updateStats(logs) {
+            const counts = { high: 0, medium: 0, low: 0 };
+            logs.forEach(log => counts[log.priority]++);
+            document.getElementById('countHigh').innerText = counts.high;
+            document.getElementById('countMed').innerText = counts.medium;
+            document.getElementById('countLow').innerText = counts.low;
+        }
+
+        function exportToCSV() {
+            if (currentLogs.length === 0) return;
+            let csv = 'Time,Priority,Content
+';
+            currentLogs.forEach(log => {
+                const time = new Date(log.created_at).toLocaleString().replace(/,/g, '');
+                const content = `"${log.content.replace(/"/g, '""')}"`;
+                csv += `${time},${log.priority.toUpperCase()},${content}
+`;
+            });
+            const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `work_diary_${currentUsername}_${new Date().toLocaleDateString()}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        fetchAllUsers();
         updateUI();
     </script>
 </body>
