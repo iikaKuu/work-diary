@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>每日工作記錄 | Work Diary</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: var(--card-bg); padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; }
+        button { background-color: var(--primary-color); color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        button:hover { opacity: 0.9; }
+        .log-item { border-bottom: 1px solid #e5e7eb; padding: 15px 0; }
+        .priority-high { color: #ef4444; font-weight: bold; }
+        .priority-medium { color: #f59e0b; font-weight: bold; }
+        .priority-low { color: #10b981; font-weight: bold; }
+        .controls { display: flex; gap: 10px; margin-bottom: 20px; }
+        .lang-switch { cursor: pointer; color: var(--primary-color); text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 id="title">每日工作記錄</h1>
+            <span class="lang-switch" onclick="toggleLang()">English / 繁體中文</span>
+        </div>
+        
+        <div class="controls">
+            <input type="text" id="usernameInput" placeholder="輸入用戶名 / Enter Username">
+            <button onclick="saveUsername()" id="saveUserBtn">保存用戶名 / Save User</button>
+        </div>
+
+        <div id="mainApp" style="display:none;">
+            <div class="form-group">
+                <label id="contentLabel">工作內容：</label>
+                <textarea id="workContent" rows="3" placeholder="輸入今日工作內容..."></textarea>
+            </div>
+            <div class="form-group">
+                <label id="priorityLabel">重要程度 (AI 自動識別)：</label>
+                <select id="priority">
+                    <option value="low">低 / Low</option>
+                    <option value="medium">中 / Medium</option>
+                    <option value="high">高 / High</option>
+                </select>
+            </div>
+            <button onclick="addLog()" id="submitBtn">提交記錄</button>
+
+            <hr>
+            <h2 id="historyTitle">歷史記錄</h2>
+            <div id="logsList"></div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://opfuiqjlsqrxxpvvrwnp.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wZnVpcWpsc3FyeHhwdnZyd25wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNTc3NDgsImV4cCI6MjA5MTYzMzc0OH0.dYhQodqZTewt0NiMjtY-0XPGTUvxgnQDpukp9p-2ZwA';
+        const DEEPSEEK_API_KEY = 'sk-aea540912179425e85dd269ca592547e';
+        
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        let currentUsername = localStorage.getItem('work_diary_user') || '';
+        let currentLang = 'zh';
+
+        const i18n = {
+            zh: {
+                title: '每日工作記錄',
+                contentLabel: '工作內容：',
+                priorityLabel: '重要程度 (AI 自動識別)：',
+                submitBtn: '提交記錄',
+                historyTitle: '歷史記錄',
+                placeholder: '輸入今日工作內容...',
+                noUser: '請先設置用戶名'
+            },
+            en: {
+                title: 'Daily Work Diary',
+                contentLabel: 'Work Content:',
+                priorityLabel: 'Priority (AI Identified):',
+                submitBtn: 'Submit Log',
+                historyTitle: 'History',
+                placeholder: 'Enter today\'s work...',
+                noUser: 'Please set username first'
+            }
+        };
+
+        function updateUI() {
+            const t = i18n[currentLang];
+            document.getElementById('title').innerText = t.title;
+            document.getElementById('contentLabel').innerText = t.contentLabel;
+            document.getElementById('priorityLabel').innerText = t.priorityLabel;
+            document.getElementById('submitBtn').innerText = t.submitBtn;
+            document.getElementById('historyTitle').innerText = t.historyTitle;
+            document.getElementById('workContent').placeholder = t.placeholder;
+            
+            if (currentUsername) {
+                document.getElementById('mainApp').style.display = 'block';
+                fetchLogs();
+            }
+        }
+
+        function toggleLang() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            updateUI();
+        }
+
+        function saveUsername() {
+            const val = document.getElementById('usernameInput').value.trim();
+            if (val) {
+                currentUsername = val;
+                localStorage.setItem('work_diary_user', val);
+                updateUI();
+            }
+        }
+
+        async function analyzePriority(content) {
+            try {
+                const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: "deepseek-chat",
+                        messages: [{
+                            role: "system", 
+                            content: "Identify the priority of the work content. Respond with only one word: 'high', 'medium', or 'low'."
+                        }, {
+                            role: "user",
+                            content: content
+                        }]
+                    })
+                });
+                const data = await response.json();
+                return data.choices[0].message.content.toLowerCase().trim();
+            } catch (e) {
+                return 'low';
+            }
+        }
+
+        async function addLog() {
+            const content = document.getElementById('workContent').value;
+            if (!content) return;
+            
+            document.getElementById('submitBtn').disabled = true;
+            const priority = await analyzePriority(content);
+            document.getElementById('priority').value = priority;
+
+            const { data, error } = await supabase
+                .from('work_logs')
+                .insert([{ username: currentUsername, content: content, priority: priority }]);
+
+            if (!error) {
+                document.getElementById('workContent').value = '';
+                fetchLogs();
+            }
+            document.getElementById('submitBtn').disabled = false;
+        }
+
+        async function fetchLogs() {
+            const { data, error } = await supabase
+                .from('work_logs')
+                .select('*')
+                .order('work_date', { ascending: false });
+
+            if (data) {
+                const list = document.getElementById('logsList');
+                list.innerHTML = data.map(log => `
+                    <div class="log-item">
+                        <strong>${log.username}</strong> (${log.work_date}) 
+                        <span class="priority-${log.priority}">[${log.priority.toUpperCase()}]</span>
+                        <p>${log.content}</p>
+                    </div>
+                `).join('');
+            }
+        }
+
+        if (currentUsername) {
+            document.getElementById('usernameInput').value = currentUsername;
+            updateUI();
+        }
+    </script>
+</body>
+</html>
