@@ -386,8 +386,8 @@
 
         function exportToCSV() {
             if (currentLogs.length === 0) return;
-            let csv = 'Time,Priority,Content
-';
+            let csv = 'Time,Priority,Content\n';
+
             currentLogs.forEach(log => {
                 const time = new Date(log.created_at).toLocaleString().replace(/,/g, '');
                 const content = `"${log.content.replace(/"/g, '""')}"`;
