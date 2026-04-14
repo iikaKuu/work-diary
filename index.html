@@ -271,8 +271,7 @@
         }
 
         function addNewUserPrompt() {
-            const name = prompt(currentLang === 'zh' ? '請輸入新用戶名：' : 'Enter new username:');
-            if (name && name.trim()) {
+            const name = 'Patrick';
                 currentUsername = name.trim();
                 localStorage.setItem('work_diary_user', currentUsername);
                 fetchAllUsers();
