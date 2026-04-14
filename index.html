@@ -232,6 +232,11 @@
             select.innerHTML = '<option value="">-- 請選擇 / Select --</option>';
             users.forEach(user => {
                 const opt = document.createElement('option');
+                        // Ensure current user is in the list
+        if (currentUsername && !users.includes(currentUsername)) {
+            users.push(currentUsername);
+            users.sort();
+        }
                 opt.value = user; opt.innerText = user;
                 if (user === currentUsername) opt.selected = true;
                 select.appendChild(opt);
