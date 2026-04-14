@@ -124,7 +124,7 @@
 
         <div class="form-group">
             <label id="selectUserLabel">切換用戶：</label>
-            <div style="display: flex; gap: 10px;">
+            <div style="display: flex; gap: 10px;" id="addUserContainer">
                 <select id="userListSelect" style="flex: 1;"></select>
                 <button onclick="addNewUserPrompt()">+ 新增 / Add</button>
             </div>
@@ -270,15 +270,34 @@
             }
         }
 
-        function addNewUserPrompt() {
-            const name = 'Patrick';
-                currentUsername = name.trim();
+                function addNewUserPrompt() {
+            const container = document.getElementById('addUserContainer');
+            if (document.getElementById('newUserInput')) return;
+            const input = document.createElement('input');
+            input.id = 'newUserInput';
+            input.placeholder = '輸入用戶名 / Enter username';
+            input.style.cssText = 'flex:1; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; margin-left:8px;';
+            const confirmBtn = document.createElement('button');
+            confirmBtn.innerText = '✓ 確認';
+            confirmBtn.style.cssText = 'padding:8px 14px; margin-left:6px; font-size:14px;';
+            confirmBtn.onclick = function() {
+                const name = input.value.trim();
+                if (!name) { input.focus(); return; }
+                currentUsername = name;
                 localStorage.setItem('work_diary_user', currentUsername);
+                container.removeChild(input);
+                container.removeChild(confirmBtn);
                 fetchAllUsers();
                 updateUI();
-            }
+            };
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') confirmBtn.onclick();
+                if (e.key === 'Escape') { container.removeChild(input); container.removeChild(confirmBtn); }
+            });
+            container.appendChild(input);
+            container.appendChild(confirmBtn);
+            input.focus();
         }
-
         function toggleLang() {
             currentLang = currentLang === 'zh' ? 'en' : 'zh';
             localStorage.setItem('work_diary_lang', currentLang);
