@@ -236,9 +236,7 @@
                                 }
                     users.sort();
             users.forEach(user => {
-                const opt = document.createElement('option');
-                        // Ensure current user is in the list
-        }
+                
                 opt.value = user; opt.innerText = user;
                 if (user === currentUsername) opt.selected = true;
                 select.appendChild(opt);
