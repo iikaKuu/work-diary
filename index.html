@@ -285,10 +285,12 @@
             const confirmBtn = document.createElement('button');
             confirmBtn.innerText = '✓ 確認';
             confirmBtn.style.cssText = 'padding:8px 14px; margin-left:6px; font-size:14px;';
-            confirmBtn.onclick = function() {
+            confirmBtn.onclick = async function() {
                 const name = input.value.trim();
                 if (!name) { input.focus(); return; }
                 currentUsername = name;
+                            // Insert new user into database
+            await supabaseClient.from('work_logs').insert({ username: name, content: '', priority: 'low' });
                 localStorage.setItem('work_diary_user', currentUsername);
                 container.removeChild(input);
                 container.removeChild(confirmBtn);
