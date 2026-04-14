@@ -304,7 +304,6 @@
                 if (!name) { input.focus(); return; }
                 currentUsername = name;
                             // Insert new user into database
-            await supabaseClient.from('work_logs').insert({ username: name, content: '', priority: 'low' });
                 localStorage.setItem('work_diary_user', currentUsername);
                 container.removeChild(input);
                 container.removeChild(confirmBtn);
