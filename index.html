@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-新增匯出CSV+工作量統計+語言記憶v4 新增刪除按鍵+用戶下拉列表+僅顯示個人記錄v3 新增刪除按鍵+用戶下拉列表+僅顯示個人記錄v2
 <html>
 <head>
     <title>每日工作記錄 | Work Diary</title>
@@ -186,6 +185,12 @@
             zh: {
                 title: '每日工作記錄',
                 selectUser: '切換用戶：',
+                                selectPlaceholder: '-- 請選擇 --',
+                                addUserBtn: '+ 新增',
+                                priorityAuto: '自動識別 (AI)',
+                                priorityHigh: '高',
+                                priorityMedium: '中',
+                                priorityLow: '低',
                 contentLabel: '工作內容：',
                 priorityLabel: '重要度設置：',
                 submitBtn: '提交記錄',
@@ -203,6 +208,12 @@
             en: {
                 title: 'Daily Work Diary',
                 selectUser: 'Switch User:',
+                                selectPlaceholder: '-- Select --',
+                                addUserBtn: '+ Add',
+                priorityAuto: 'Auto Detect (AI)',
+                priorityHigh: 'High',
+                priorityMedium: 'Medium',
+                priorityLow: 'Low',
                 contentLabel: 'Work Content:',
                 priorityLabel: 'Priority Setting:',
                 submitBtn: 'Submit Log',
@@ -229,7 +240,8 @@
 
         function updateUserListUI(users) {
             const select = document.getElementById('userListSelect');
-            select.innerHTML = '<option value="">-- 請選擇 / Select --</option>';
+        const lang = i18n[currentLang];
+        select.innerHTML = `<option value="">${lang.selectPlaceholder}</option>`;
                     // Ensure current user is in the list even without DB records
                     if (currentUsername && !users.includes(currentUsername)) {
                                     users.push(currentUsername);
@@ -237,7 +249,9 @@
                     users.sort();
             users.forEach(user => {
                 
-                opt.value = user; opt.innerText = user;
+                            const opt = document.createElement('option');
+                            opt.value = user;
+            opt.innerText = user;
                 if (user === currentUsername) opt.selected = true;
                 select.appendChild(opt);
             });
